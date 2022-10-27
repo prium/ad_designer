@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Retriever Ad Designer</title>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.15/lodash.min.js"></script>
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link type="text/css" rel="stylesheet" href="//unpkg.com/bootstrap-vue@latest/dist/bootstrap-vue.min.css"/>
+    <link rel="stylesheet" href="css/custom.css">
+</head>
+<body>
+  <div class="container">
+    <div id="app"></div>
+  </div>
+
+  <script src="https://retriever-qa3.s3.amazonaws.com/static/js/libs/fontawesome.js" crossorigin="anonymous"></script>
+  <script src="https://retriever-qa3.s3.amazonaws.com/static/js/libs/jquery.min-3.4.1.js"></script>
+  <script src="https://retriever-qa3.s3.amazonaws.com/static/js/libs/boostrap.min-4.4.1.js"></script>
+  <script src="https://retriever-qa3.s3.amazonaws.com/static/js/src/bootstrap_utils.js"></script>
+  <script src="https://retriever-qa3.s3.amazonaws.com/static/js/libs/vue.min-2.6.11.js"></script>
+  <script src="https://retriever-qa3.s3.amazonaws.com/static/js/libs/bootstrap-vue.min-2.22.0.js"></script>
+  <script src="https://retriever-qa3.s3.amazonaws.com/static/js/libs/formulate.min-2.4.3.js"></script>
+  <script src="https://retriever-qa3.s3.amazonaws.com/static/js/libs/axios.min-1.1.2.js"></script>
+  <script src="https://retriever-qa3.s3.amazonaws.com/static/js/libs/vue-axios.min-2.1.5.js"></script>
+  <script src="https://retriever-qa3.s3.amazonaws.com/static/js/libs/js.cookie.min-2.2.1.js"></script>
+
+  <script type="module">
+        import ApiService from "/js/common/api.service.js";
+        ApiService.init("https://retriever-qa3.loknow.com/api/", 'eae03b1d5fed6cb2f1e18d875c38ab650826e60d');
+        window.ApiService = ApiService;
+  </script>
+  <script type="module">
+      const urlBase = 'https://retriever-qa3.loknow.com';
+      import { AdForm } from "/js/DisplayAds.js";
+      new AdForm({
+          el:"#app",
+          propsData: {
+              base_preset_preview_url: urlBase + '/vice-golf-36B653/template/preset/preview',
+              file_upload_url: urlBase + '/api/file/upload',
+              website_id: "d0f39330",
+              website: "vice-golf-36B653",
+              theme_id: "70072fc1",
+              ad_id: "f1676722",
+              fonts: ['Cookie', 'Dancing Script', 'Montserrat', 'Open Sans', 'Oswald', 'Poppins', 'Raleway', 'Roboto', 'Roboto Slab'],
+              custom_fonts: [],
+              preset_logo_url: "https://retriever-qa3.s3.amazonaws.com/static/img/logo-here.png",
+              preset_asset_thumbnail: "https://retriever-qa3.s3.amazonaws.com/static/img/default-thumbnail.png",
+              preset_image_thumbnail: "https://retriever-qa3.s3.amazonaws.com/static/img/itemset-placeholder-square.png",
+              media_prefix: "https://retriever-qa3.s3.amazonaws.com/media/",
+              setsURL: urlBase + "/vice-golf-36B653/sets"
+          }
+      });
+  </script>
+
+
+</body>
+</html>

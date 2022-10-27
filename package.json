@@ -4,7 +4,7 @@
   "description": "Retriever Ad Designer",
   "main": "index.js",
   "scripts": {
-    "start": "http-server /static",
+    "start": "http-server ./static -p 8081",
     "test": "test"
   },
   "author": "LoKnow Inc.",
