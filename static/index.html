@@ -25,13 +25,13 @@
   <script src="https://retriever-qa3.s3.amazonaws.com/static/js/libs/js.cookie.min-2.2.1.js"></script>
 
   <script type="module">
-        import ApiService from "/js/common/api.service.js";
+        import ApiService from "/js/src/common/api.service.js";
         ApiService.init("https://retriever-qa3.loknow.com/api/", 'eae03b1d5fed6cb2f1e18d875c38ab650826e60d');
         window.ApiService = ApiService;
   </script>
   <script type="module">
       const urlBase = 'https://retriever-qa3.loknow.com';
-      import { AdForm } from "/js/DisplayAds.js";
+      import { AdForm } from "/js/src/DisplayAds.js";
       new AdForm({
           el:"#app",
           propsData: {
