@@ -36,3 +36,7 @@ Submissions will be evaluated primarily on these criteria:
   framework and industry conventions?
 
 Bonus points if you are able to automate testing of your new logic.
+
+## Submission
+Please send your submission as an archive (zip, tar), or upload to a new
+repository and forward the URL.
