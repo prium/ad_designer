@@ -32,6 +32,7 @@ Submissions will be evaluated primarily on these criteria:
 - Does it meet the basic requirements?
 - How pleasant is the resulting UI within the range of functionality of the ad
   designer?
-- Is the code well organized, easy to read, and does it adhere to framework and
-  industry conventions?
-- Bonus points if you are able to automate testing of your new logic.
+- Is the code well organized/factored, easy to read, and does it adhere to 
+  framework and industry conventions?
+
+Bonus points if you are able to automate testing of your new logic.
