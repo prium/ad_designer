@@ -70,9 +70,7 @@ let AdForm = Vue.extend({
 
 
     mounted: function () {
-        if (Cookies.get('csrftoken')) {
-            this.init()
-        }
+        this.init()
     },
 
     components: {
