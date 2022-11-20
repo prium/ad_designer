@@ -1,162 +1,197 @@
-import ApiService, {AdsService, ThemesService} from './common/api.service.js'
+import ApiService, { AdsService, ThemesService } from "./common/api.service.js";
 
 Vue.use(VueFormulate);
 
 let AdHtmlThemeBuilder = Vue.extend({
-    data: function () {
-        return {
-            isSaving: false,
-            advanced: false,
-            expand: false,
-            template_id: undefined,
-            sizes: {},
-            previewURL: '',
-            secondPreviewURL: '',
-            urlReady: false,
-            _width: null,
-            timeout: 3000,
-            showingFirstIframe: false,
+  data: function () {
+    return {
+      isSaving: false,
+      advanced: false,
+      expand: false,
+      template_id: undefined,
+      sizes: {},
+      previewURL: "",
+      secondPreviewURL: "",
+      urlReady: false,
+      _width: null,
+      timeout: 3000,
+      showFirstPreview: true,
+      showLoader: true,
+    };
+  },
+
+  props: {
+    store: Object,
+    template_preset_url: String,
+    base_preset_preview_url: String,
+    file_upload_url: String,
+    website_id: String,
+    website: String,
+    ad_id: String,
+    fonts: Array,
+    custom_fonts: Array,
+    theme_id: String,
+    preset_logo_url: String,
+    media_prefix: String,
+  },
+
+  mounted: function () {
+    this.getSizes();
+    this.previewURL = this.presetPreviewURL;
+    // this.secondPreviewURL = this.previewURL;
+    this.urlReady = true;
+  },
+
+  methods: {
+    getSizes() {
+      let parent_theme = this.store.ad.theme.parent_theme;
+      if (parent_theme.version !== parent_theme.latest_version) {
+        ThemesService.getLatestVersion(
+          parent_theme.theme_id,
+          this.isVideo ? "video" : "html"
+        ).then((response) => {
+          parent_theme = response.results[0];
+        });
+      }
+
+      // clear current template id & sizes if any
+      this.template_id != undefined ? (this.template_id = undefined) : null;
+      this.sizes != {} ? (this.sizes = {}) : null;
+
+      for (let i = 0; i < parent_theme.templates.length; i++) {
+        this.sizes[parent_theme.templates[i].id] =
+          parent_theme.templates[i].size;
+        // if we find 300x250 in the sizes set it as default else we use whatever is first
+        // in the original list
+        if (parent_theme.templates[i].size === "300 X 250") {
+          this.template_id = parent_theme.templates[i].id;
         }
+      }
+      // sort lexographically. From entries creates a dictionary from a list
+      // this is to get to to the correct format we expect
+      this.sizes = Object.fromEntries(
+        // object.entries converts the dictionary to a list
+        Object.entries(this.sizes).sort(function (a, b) {
+          // this compares the 2 values in a list and
+          // sorts it lowest to highest in alphabetical order
+          return a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0;
+        })
+      );
     },
 
-    props: {
-        store: Object,
-        template_preset_url: String,
-        base_preset_preview_url: String,
-        file_upload_url: String,
-        website_id: String,
-        website: String,
-        ad_id: String,
-        fonts: Array,
-        custom_fonts: Array,
-        theme_id: String,
-        preset_logo_url: String,
-        media_prefix: String,
+    refreshItems() {
+      // little cheeky way of refreshing the preview url so it reloads the iframe
+      this.store.refreshItemsetImage();
     },
 
-    mounted: function () {
-        this.getSizes();
-        this.showingFirstIframe = true;
-        this.previewURL = this.presetPreviewURL;
-        this.urlReady = true
+    showAdvanced() {
+      this.advanced = true;
     },
 
-    methods: {
-        getSizes() {
-            let parent_theme = this.store.ad.theme.parent_theme;
-            if (parent_theme.version !== parent_theme.latest_version){
-                ThemesService.getLatestVersion(parent_theme.theme_id, this.isVideo ? 'video' : 'html')
-                .then(response => {
-                    parent_theme = response.results[0]
-                })
-            }
-
-            // clear current template id & sizes if any
-            this.template_id != undefined ? this.template_id = undefined : null;
-            this.sizes != {} ? this.sizes = {} : null
-
-            for (let i = 0; i < parent_theme.templates.length; i++) {
-                this.sizes[parent_theme.templates[i].id] = parent_theme.templates[i].size
-                // if we find 300x250 in the sizes set it as default else we use whatever is first
-                // in the original list
-                if (parent_theme.templates[i].size === "300 X 250") {
-                    this.template_id = parent_theme.templates[i].id
-                }
-            }
-            // sort lexographically. From entries creates a dictionary from a list
-            // this is to get to to the correct format we expect
-            this.sizes = Object.fromEntries(
-                // object.entries converts the dictionary to a list
-                Object.entries(this.sizes).sort((function (a, b) {
-                    // this compares the 2 values in a list and
-                    // sorts it lowest to highest in alphabetical order
-                    return a[1] < b[1] ? -1 : a[1] > b[1] ? 1 : 0
-                }))
-            );
-        },
-
-        refreshItems() {
-            // little cheeky way of refreshing the preview url so it reloads the iframe
-            this.store.refreshItemsetImage();
-        },
-
-        showAdvanced() {
-            this.advanced = true;
-        },
-
-        hideAdvanced() {
-            this.advanced = false;
-        },
-
-        handleExpand() {
-            this.expand = !this.expand
-        },
-
-        async uploadFile(file, progress, error, options) {
-            let formData = new FormData();
-            let logo_url = this.website.concat('/', file.name);
-            formData.append('file', file);
-            formData.append('path', logo_url);
-            formData.append('add_unique_id', true);
-            axios.post(this.file_upload_url,
-                formData,
-                {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                        'Authorization': 'Token ' + ApiService.token
-                    }
-                },
-                progress(100)
-            ).then(response => {
-                this.store.ad.theme.custom_fields.logo_url = response.data.path;
-                console.log('Uploaded file with path:', response.data.path);
-            }).catch(response => {
-                console.log(response)
-            })
-        },
-
+    hideAdvanced() {
+      this.advanced = false;
     },
 
-    watch: {
-        'store.ad.theme.parent_theme': function(newVal, oldVal) {
-            this.getSizes();
-        },
-        presetPreviewURL: _.debounce(function(newVal, oldVal) {
-            this.previewURL = newVal;
-        }, 1000),
-        width: _.debounce(function (newWidth, oldWidth) {
-            this.width = newWidth
-        }, 500),
+    handleExpand() {
+      this.expand = !this.expand;
     },
 
-    computed: {
-        presetPreviewURL: function() {
-		    return this.template_id ? this.store.createPreviewURL(this.base_preset_preview_url, this.template_id, this.theme_id) : null
-        },
-        width: {
-            get() {
-                return this.template_id ? this.sizes[this.template_id].split('X')[0].trim() : null
+    async uploadFile(file, progress, error, options) {
+      let formData = new FormData();
+      let logo_url = this.website.concat("/", file.name);
+      formData.append("file", file);
+      formData.append("path", logo_url);
+      formData.append("add_unique_id", true);
+      axios
+        .post(
+          this.file_upload_url,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: "Token " + ApiService.token,
             },
-            set(value) {
-                this._width = value
-            }
-        }, 
-        height: function () {
-            return this.template_id ? this.sizes[this.template_id].split('X')[1].trim() : null
-        },
-        themeCol: function() {
-            return this.expand ? 'col-12' : 'col-6';
-        },
-        expandIcon: function() {
-            return this.expand ? 'fas fa-angle-double-right' : 'fas fa-angle-double-left'
-        },
-        all_fonts: function(){
-            return this.fonts.concat(this.custom_fonts).sort()
-        }
+          },
+          progress(100)
+        )
+        .then((response) => {
+          this.store.ad.theme.custom_fields.logo_url = response.data.path;
+          console.log("Uploaded file with path:", response.data.path);
+        })
+        .catch((response) => {
+          console.log(response);
+        });
+    },
+  },
+
+  watch: {
+    "store.ad.theme.parent_theme": function (newVal, oldVal) {
+      this.getSizes();
+    },
+    presetPreviewURL: _.debounce(function (newVal, oldVal) {
+      if (this.showFirstPreview) {
+        this.previewURL = newVal;
+        setTimeout(() => {
+          this.showFirstPreview = false;
+        }, 5000);
+      } else {
+        this.secondPreviewURL = newVal;
+        setTimeout(() => {
+          this.showFirstPreview = true;
+        }, 5000);
+      }
+    }, 1000),
+    width: _.debounce(function (newWidth, oldWidth) {
+      this.width = newWidth;
+    }, 500),
+  },
+
+  computed: {
+    presetPreviewURL: function () {
+      // Displaying the loading indicator
+      this.showLoader = true;
+      setTimeout(() => {
+        this.showLoader = false;
+      }, 6000);
+
+      return this.template_id
+        ? this.store.createPreviewURL(
+            this.base_preset_preview_url,
+            this.template_id,
+            this.theme_id
+          )
+        : null;
+    },
+    width: {
+      get() {
+        return this.template_id
+          ? this.sizes[this.template_id].split("X")[0].trim()
+          : null;
+      },
+      set(value) {
+        this._width = value;
+      },
+    },
+    height: function () {
+      return this.template_id
+        ? this.sizes[this.template_id].split("X")[1].trim()
+        : null;
+    },
+    themeCol: function () {
+      return this.expand ? "col-12" : "col-6";
+    },
+    expandIcon: function () {
+      return this.expand
+        ? "fas fa-angle-double-right"
+        : "fas fa-angle-double-left";
     },
 
-    template:
-        `
+    all_fonts: function () {
+      return this.fonts.concat(this.custom_fonts).sort();
+    },
+  },
+
+  template: `
     <div class="container-fluid mt-3">
         <div class="row my-2">
             <h5 class="pl-3">Customize</h5>
@@ -239,13 +274,28 @@ let AdHtmlThemeBuilder = Vue.extend({
                                 <button type="button" class="btn btn-primary" @click="refreshItems()">Refresh</button>
                             </div>
                         </div>
-                        <div class="row align-self-center ">
-                            <iframe class="my-2"
-                            v-bind:width="width"
-                            v-bind:height="height"
-                            v-bind:src="previewURL"
-                            scrolling="no"
-                            frameborder="0">
+                        <div class="row align-self-center iframes-container">
+                            <div class="loading-indicator mt-2"
+                                v-bind:class="{show : showLoader}"
+                                v-bind:style="{'width': width + 'px', 'height': height + 'px'}">
+                                <img src="img/spinner.gif"/>
+                            </div>
+                            <iframe class="mt-2"
+                                v-bind:class="{enabled: !showFirstPreview}"
+                                v-bind:width="width"
+                                v-bind:height="height"
+                                v-bind:src="previewURL"
+                                scrolling="no"
+                                frameborder="0">
+                            </iframe>
+                            
+                            <iframe class="mt-2"
+                                v-bind:class="{enabled: showFirstPreview}"
+                                v-bind:width="width"
+                                v-bind:height="height"
+                                v-bind:src="secondPreviewURL"
+                                scrolling="no"
+                                frameborder="0">
                             </iframe>
                         </div>
                     </div>
@@ -253,7 +303,7 @@ let AdHtmlThemeBuilder = Vue.extend({
             </div>
         </div>
     </div>
-    `
+    `,
 });
 
-export {AdHtmlThemeBuilder};
+export { AdHtmlThemeBuilder };
